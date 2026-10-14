@@ -1,0 +1,20 @@
+# Секрети
+.env
+*.tfvars
+!*.tfvars.example
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+.terraform.tfstate.lock.info
+
+# macOS / редактори
+.DS_Store
+.idea/
+.vscode/

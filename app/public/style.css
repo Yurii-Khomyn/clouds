@@ -1,0 +1,119 @@
+:root {
+  --bg: #f5f6fa;
+  --card: #ffffff;
+  --text: #1f2430;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --border: #e5e7eb;
+  --ok: #15803d;
+  --err: #b91c1c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { margin: 0; font-size: 1.4rem; white-space: nowrap; }
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+@media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+
+h2 { margin: 0 0 12px; font-size: 1.1rem; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.card img {
+  width: 100%;
+  aspect-ratio: 7 / 5;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--border);
+}
+.card h3 { margin: 0; font-size: 1rem; }
+.card p { margin: 0; color: var(--muted); font-size: .85rem; flex: 1; }
+.card .price { font-weight: 700; }
+
+aside {
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+#cart-items { list-style: none; margin: 0 0 8px; padding: 0; }
+#cart-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .9rem;
+}
+#cart-items .empty { color: var(--muted); border: 0; }
+#cart-items button { padding: 2px 8px; }
+
+.total { display: flex; justify-content: space-between; margin: 12px 0; }
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: var(--accent-hover); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+aside > button { width: 100%; }
+
+#message { min-height: 1.2em; margin: 8px 0 0; font-size: .9rem; }
+#message.ok { color: var(--ok); }
+#message.err { color: var(--err); }

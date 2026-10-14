@@ -1,0 +1,36 @@
+services:
+  db:
+    # Версія зафіксована, як і в Dockerfile.
+    image: postgres:17.11-alpine3.24
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shop
+      POSTGRES_DB: shop
+      # Пароль береться з файлу .env (він у .gitignore). Без нього compose не стартує.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Скопіюйте .env.example у .env і задайте пароль}
+    volumes:
+      # Іменований volume: дані живуть окремо від контейнера
+      # і переживають `docker compose down` (зникнуть лише з прапором -v).
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop -d shop"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # `ports` немає навмисно: базу не видно ззовні, до неї ходить лише застосунок.
+
+  app:
+    build: ./app
+    restart: unless-stopped
+    depends_on:
+      db:
+        # Застосунок стартує, коли база справді готова приймати запити.
+        condition: service_healthy
+    environment:
+      # Хост `db` це ім'я сервісу вище: compose дає контейнерам DNS за іменами.
+      DATABASE_URL: postgres://shop:${POSTGRES_PASSWORD}@db:5432/shop
+    ports:
+      - "3000:3000"
+
+volumes:
+  db-data:

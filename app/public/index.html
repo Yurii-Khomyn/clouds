@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Все для дому</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Все для дому</h1>
+  </header>
+
+  <main>
+    <section>
+      <h2>Товари</h2>
+      <div id="products" class="grid" aria-live="polite">Завантаження…</div>
+    </section>
+
+    <aside>
+      <h2>Кошик</h2>
+      <ul id="cart-items"></ul>
+      <p class="total">Разом: <strong id="total">0 ₴</strong></p>
+      <input id="customer" placeholder="Ваше ім'я" autocomplete="name">
+      <button id="checkout" disabled>Оформити замовлення</button>
+      <p id="message" role="status"></p>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
