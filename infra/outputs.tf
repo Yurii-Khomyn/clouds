@@ -19,3 +19,16 @@ output "db_fqdn" {
   description = "Приватна адреса бази (з інтернету недоступна)"
   value       = azurerm_postgresql_flexible_server.main.fqdn
 }
+
+# Нижче ідентифікатори, не секрети: їх підставляє workflow через змінні GitHub.
+output "github_client_id" {
+  value = azurerm_user_assigned_identity.github.client_id
+}
+
+output "tenant_id" {
+  value = data.azurerm_client_config.current.tenant_id
+}
+
+output "acr_login_server" {
+  value = azurerm_container_registry.main.login_server
+}

@@ -37,3 +37,9 @@ variable "budget_start_date" {
   type        = string
   default     = "2026-10-01T00:00:00Z"
 }
+
+variable "github_repo" {
+  description = "Репозиторій GitHub у форматі власник/назва. Лише йому дозволено деплой."
+  type        = string
+  default     = "Yurii-Khomyn/clouds"
+}
