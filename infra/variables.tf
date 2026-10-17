@@ -43,3 +43,15 @@ variable "github_repo" {
   type        = string
   default     = "Yurii-Khomyn/clouds"
 }
+
+variable "github_owner_id" {
+  description = "Числовий ID власника репозиторію (gh api repos/<repo> --jq .owner.id). GitHub підписує OIDC-токен за ID, а не за іменем."
+  type        = string
+  default     = "180960683"
+}
+
+variable "github_repo_id" {
+  description = "Числовий ID репозиторію (gh api repos/<repo> --jq .id). Зміниться, якщо репозиторій створити заново."
+  type        = string
+  default     = "1423227999"
+}

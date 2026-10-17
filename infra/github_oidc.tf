@@ -11,14 +11,15 @@ resource "azurerm_user_assigned_identity" "github" {
 }
 
 # Довіряємо токенам лише з нашого репозиторію і лише з гілки main.
-# Інші гілки, форки та репозиторії отримають відмову.
+# GitHub підписує токен за числовими ID власника й репозиторію (а не за іменами),
+# тому subject має саме такий формат. Інші гілки, форки та репозиторії отримають відмову.
 resource "azurerm_federated_identity_credential" "github_main" {
   name                = "github-main"
   resource_group_name = azurerm_resource_group.main.name
   parent_id           = azurerm_user_assigned_identity.github.id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_repo}:ref:refs/heads/main"
+  subject             = "repo:${split("/", var.github_repo)[0]}@${var.github_owner_id}/${split("/", var.github_repo)[1]}@${var.github_repo_id}:ref:refs/heads/main"
 }
 
 # Мінімально потрібні права: пушити образи в реєстр...
