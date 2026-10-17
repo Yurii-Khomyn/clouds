@@ -11,7 +11,7 @@ variable "alert_email" {
 variable "location" {
   description = "Регіон. Студентська підписка дозволяє лише 5 регіонів."
   type        = string
-  default     = "germanywestcentral"
+  default     = "switzerlandnorth"
 }
 
 variable "project" {

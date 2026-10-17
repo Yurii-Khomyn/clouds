@@ -1,6 +1,6 @@
 output "app_url" {
-  description = "Публічна адреса магазину"
-  value       = "https://${azurerm_container_app.shop.ingress[0].fqdn}"
+  description = "Публічна адреса магазину (через балансувальник)"
+  value       = "http://${azurerm_public_ip.lb.fqdn}"
 }
 
 output "resource_group" {

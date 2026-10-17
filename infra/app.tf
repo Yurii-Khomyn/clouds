@@ -15,6 +15,10 @@ resource "azurerm_container_app_environment" "main" {
   # Середовище живе у нашій VNet, тому застосунок бачить базу за приватною адресою.
   infrastructure_subnet_id = azurerm_subnet.app.id
 
+  # Внутрішнє середовище: публічної адреси немає, до застосунку можна лише через балансувальник.
+  internal_load_balancer_enabled = true
+  public_network_access          = "Disabled"
+
   workload_profile {
     name                  = "Consumption"
     workload_profile_type = "Consumption"
@@ -45,8 +49,9 @@ resource "azurerm_container_app" "shop" {
   }
 
   ingress {
-    external_enabled = true
-    target_port      = 3000
+    external_enabled           = true # у внутрішньому середовищі це доступ з VNet, не з інтернету
+    allow_insecure_connections = true # балансувальник ходить на бекенд по HTTP усередині VNet
+    target_port                = 3000
     traffic_weight {
       percentage      = 100
       latest_revision = true
