@@ -52,7 +52,7 @@ function renderProducts() {
       <img alt="" loading="lazy">
       <h3></h3><p></p>
       <div class="price">${money(p.price_cents)}</div>
-      <button>Додати в кошик</button>`;
+      <button>У кошик</button>`;
     // textContent, а не innerHTML, для даних з бази: захист від XSS.
     const img = card.querySelector('img');
     img.src = p.image_url;
