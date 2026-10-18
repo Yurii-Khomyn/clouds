@@ -1,11 +1,28 @@
 const path = require('path');
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
 const { pool, init } = require('./db');
+const openapi = require('./openapi');
 
 const app = express();
 app.use(express.json());
+
+// Логуємо кожен запит у stdout: Container Apps передає його в Log Analytics.
+// /health не логуємо, бо балансувальник кличе його кожні 15 секунд і це лише шум.
+app.use((req, res, next) => {
+  if (req.path === '/health') return next();
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms`);
+  });
+  next();
+});
 // Фронтенд (статичні файли) віддає той самий сервіс: один образ, один контейнер.
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Документація API: Swagger UI за адресою /docs, сирий опис у /openapi.json.
+app.get('/openapi.json', (req, res) => res.json(openapi));
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi, { customSiteTitle: 'Все для дому: API' }));
 
 // Health check: його будуть смикати балансувальник і Container Apps.
 // Навмисно НЕ ходить у базу: це перевірка, що процес живий.
