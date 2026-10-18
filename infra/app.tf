@@ -25,6 +25,12 @@ resource "azurerm_container_app_environment" "main" {
   }
 }
 
+# Ключ підпису JWT-токенів. Генерується Terraform, живе лише в state і секреті Container Apps.
+resource "random_password" "jwt" {
+  length  = 48
+  special = false
+}
+
 resource "azurerm_container_app" "shop" {
   name                         = "ca-${var.project}"
   resource_group_name          = azurerm_resource_group.main.name
@@ -46,6 +52,11 @@ resource "azurerm_container_app" "shop" {
   secret {
     name  = "database-url"
     value = "postgres://${azurerm_postgresql_flexible_server.main.administrator_login}:${random_password.db.result}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.shop.name}"
+  }
+
+  secret {
+    name  = "jwt-secret"
+    value = random_password.jwt.result
   }
 
   ingress {
@@ -71,6 +82,10 @@ resource "azurerm_container_app" "shop" {
       env {
         name        = "DATABASE_URL"
         secret_name = "database-url"
+      }
+      env {
+        name        = "JWT_SECRET"
+        secret_name = "jwt-secret"
       }
       env {
         name  = "DB_SSL"

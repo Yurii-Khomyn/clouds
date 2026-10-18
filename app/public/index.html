@@ -9,6 +9,7 @@
 <body>
   <header>
     <h1>Все для дому</h1>
+    <div id="auth"></div>
   </header>
 
   <main>
@@ -17,15 +18,38 @@
       <div id="products" class="grid" aria-live="polite">Завантаження…</div>
     </section>
 
-    <aside>
-      <h2>Кошик</h2>
-      <ul id="cart-items"></ul>
-      <p class="total">Разом: <strong id="total">0 ₴</strong></p>
-      <input id="customer" placeholder="Ваше ім'я" autocomplete="name">
-      <button id="checkout" disabled>Оформити замовлення</button>
-      <p id="message" role="status"></p>
-    </aside>
+    <div class="side">
+      <aside>
+        <h2>Кошик</h2>
+        <ul id="cart-items"></ul>
+        <p class="total">Разом: <strong id="total">0 ₴</strong></p>
+        <button id="checkout" disabled>Оформити замовлення</button>
+        <p id="message" role="status"></p>
+      </aside>
+
+      <aside id="orders-box" hidden>
+        <h2>Мої замовлення</h2>
+        <ul id="orders-list"></ul>
+      </aside>
+    </div>
   </main>
+
+  <dialog id="auth-dialog">
+    <form id="auth-form" method="dialog">
+      <h2 id="auth-title">Вхід</h2>
+      <input id="auth-name" placeholder="Ваше ім'я" autocomplete="name" hidden>
+      <input id="auth-email" type="email" placeholder="Email" autocomplete="email" required>
+      <input id="auth-password" type="password" placeholder="Пароль (від 8 символів)" autocomplete="current-password" minlength="8" required>
+      <p id="auth-error" role="alert"></p>
+      <div class="row">
+        <button type="submit" id="auth-submit">Увійти</button>
+        <button type="button" id="auth-cancel" class="secondary">Скасувати</button>
+      </div>
+      <p class="switch">
+        <a href="#" id="auth-switch">Немає акаунта? Зареєструватися</a>
+      </p>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

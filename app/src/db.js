@@ -41,12 +41,21 @@ async function init() {
       image_url   TEXT    NOT NULL DEFAULT '',
       price_cents INTEGER NOT NULL CHECK (price_cents >= 0)
     );
+    CREATE TABLE IF NOT EXISTS users (
+      id            SERIAL PRIMARY KEY,
+      name          TEXT        NOT NULL,
+      email         TEXT        NOT NULL UNIQUE,
+      password_hash TEXT        NOT NULL,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS orders (
       id            SERIAL PRIMARY KEY,
       customer_name TEXT        NOT NULL,
       total_cents   INTEGER     NOT NULL,
       created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    -- user_id додано пізніше: ALTER безпечний для вже існуючої бази.
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id);
     CREATE TABLE IF NOT EXISTS order_items (
       id         SERIAL PRIMARY KEY,
       order_id   INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,

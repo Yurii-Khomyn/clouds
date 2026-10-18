@@ -13,12 +13,15 @@
 | Метод і шлях | Призначення |
 |---|---|
 | `GET /` | сторінка магазину (каталог, кошик, оформлення замовлення) |
+| `POST /auth/register` | реєстрація, повертає JWT-токен |
+| `POST /auth/login` | вхід, повертає JWT-токен |
 | `GET /products` | каталог товарів із бази |
-| `POST /orders` | створити замовлення (`{"customer": "Ім'я", "items": [{"productId": 1, "quantity": 2}]}`) |
-| `GET /orders` | останні замовлення |
+| `POST /orders` | створити замовлення **(потрібен токен)**: `{"items": [{"productId": 1, "quantity": 2}]}` |
+| `GET /orders` | мої замовлення **(потрібен токен)** |
+| `GET /docs` | документація API (Swagger UI), `/openapi.json` це сирий опис |
 | `GET /health` | перевірка, що застосунок живий (її використовує балансувальник) |
 
-Ціну замовлення сервер рахує за цінами з бази, а не з браузера.
+Ціну замовлення сервер рахує за цінами з бази, а не з браузера. Без токена захищені ендпоінти повертають `401`. Паролі зберігаються лише як хеші, ключ підпису токенів береться зі змінної середовища `JWT_SECRET`.
 
 ## Технології
 
@@ -26,6 +29,7 @@
 - **Контейнер:** Docker, базовий образ із зафіксованою версією, залежності окремим шаром, процес працює не від root.
 - **Інфраструктура:** Terraform (провайдер `azurerm`), регіон `switzerlandnorth`.
 - **Azure:** Container Apps, Container Registry (ACR), Database for PostgreSQL Flexible Server, Virtual Network, Application Gateway, Log Analytics.
+- **Моніторинг:** Log Analytics (логи), дашборд Azure і тривоги на email (див. `infra/monitoring.tf`).
 - **CI/CD:** GitHub Actions, вхід в Azure через OIDC (без збережених ключів).
 
 ## Архітектура
@@ -51,6 +55,8 @@
 ├── app/                      застосунок
 │   ├── src/
 │   │   ├── server.js         REST API (Express)
+│   │   ├── auth.js           JWT, хешування паролів, middleware захисту
+│   │   ├── openapi.js        опис API для Swagger UI
 │   │   └── db.js             підключення до PostgreSQL, створення таблиць, початкові дані
 │   ├── public/               фронтенд (index.html, app.js, style.css, img/)
 │   ├── Dockerfile
@@ -67,6 +73,7 @@
 │   ├── app.tf                Log Analytics, середовище Container Apps, застосунок
 │   ├── loadbalancer.tf       Application Gateway і публічна IP
 │   ├── github_oidc.tf        OIDC-доступ для GitHub Actions
+│   ├── monitoring.tf         дашборд, тривоги на email, логи балансувальника
 │   ├── budget.tf             бюджет зі сповіщеннями на email
 │   ├── outputs.tf            адреси й імена ресурсів
 │   └── terraform.tfvars.example
@@ -80,7 +87,7 @@
 Потрібен лише Docker.
 
 ```bash
-cp .env.example .env            # задайте POSTGRES_PASSWORD у .env
+cp .env.example .env            # задайте POSTGRES_PASSWORD і JWT_SECRET у .env
 docker compose up -d --build
 open http://localhost:3000
 ```

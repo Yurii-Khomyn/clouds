@@ -8,11 +8,37 @@ module.exports = {
   },
   servers: [{ url: '/' }],
   tags: [
+    { name: 'Автентифікація' },
     { name: 'Каталог' },
     { name: 'Замовлення' },
     { name: 'Службове' },
   ],
   paths: {
+    '/auth/register': {
+      post: {
+        tags: ['Автентифікація'],
+        summary: 'Реєстрація',
+        description: 'Створює користувача й одразу повертає JWT-токен (діє 1 годину).',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/RegisterRequest' } } } },
+        responses: {
+          201: { description: 'Користувача створено', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } },
+          400: { description: 'Некоректні дані', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          409: { description: 'Такий email уже зареєстровано', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
+    '/auth/login': {
+      post: {
+        tags: ['Автентифікація'],
+        summary: 'Вхід',
+        description: 'Повертає JWT-токен. Його треба передавати в заголовку Authorization: Bearer <токен>.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/LoginRequest' } } } },
+        responses: {
+          200: { description: 'Успішний вхід', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } },
+          401: { description: 'Хибний email або пароль', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
     '/products': {
       get: {
         tags: ['Каталог'],
@@ -32,8 +58,11 @@ module.exports = {
     '/orders': {
       get: {
         tags: ['Замовлення'],
-        summary: 'Останні замовлення (до 20)',
+        summary: 'Мої замовлення (до 20)',
+        description: 'Лише замовлення поточного користувача. Потрібен токен.',
+        security: [{ bearerAuth: [] }],
         responses: {
+          401: { description: 'Немає токена або він недійсний', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           200: {
             description: 'Список замовлень, найновіші першими',
             content: {
@@ -47,13 +76,14 @@ module.exports = {
       post: {
         tags: ['Замовлення'],
         summary: 'Створити замовлення',
-        description: 'Суму рахує сервер за цінами з бази, а не з запиту.',
+        description: 'Потрібен токен. Ім\'я покупця береться з токена, суму рахує сервер за цінами з бази.',
+        security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
               schema: { $ref: '#/components/schemas/OrderRequest' },
-              example: { customer: 'Юрій', items: [{ productId: 1, quantity: 2 }] },
+              example: { items: [{ productId: 1, quantity: 2 }] },
             },
           },
         },
@@ -62,8 +92,9 @@ module.exports = {
             description: 'Замовлення створено',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderCreated' } } },
           },
+          401: { description: 'Немає токена або він недійсний', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           400: {
-            description: 'Некоректний запит (порожнє ім\'я, немає товарів, невідомий товар)',
+            description: 'Некоректний запит (немає товарів, невідомий товар)',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
           },
           500: {
@@ -92,7 +123,28 @@ module.exports = {
     },
   },
   components: {
+    securitySchemes: {
+      bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', description: 'Токен із /auth/login або /auth/register' },
+    },
     schemas: {
+      RegisterRequest: {
+        type: 'object',
+        required: ['name', 'email', 'password'],
+        properties: {
+          name: { type: 'string', example: 'Юрій' },
+          email: { type: 'string', format: 'email', example: 'yurii@example.com' },
+          password: { type: 'string', minLength: 8, example: 'щонайменше-8-символів' },
+        },
+      },
+      LoginRequest: {
+        type: 'object',
+        required: ['email', 'password'],
+        properties: { email: { type: 'string', format: 'email' }, password: { type: 'string' } },
+      },
+      AuthResponse: {
+        type: 'object',
+        properties: { token: { type: 'string', description: 'JWT, діє 1 годину' }, name: { type: 'string' } },
+      },
       Product: {
         type: 'object',
         properties: {
@@ -105,9 +157,8 @@ module.exports = {
       },
       OrderRequest: {
         type: 'object',
-        required: ['customer', 'items'],
+        required: ['items'],
         properties: {
-          customer: { type: 'string', example: 'Юрій' },
           items: {
             type: 'array',
             minItems: 1,
