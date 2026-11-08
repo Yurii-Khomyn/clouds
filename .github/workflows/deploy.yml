@@ -1,12 +1,10 @@
 name: Deploy
 
-# push у main -> збірка образу -> публікація в реєстр з тегом = хеш коміту -> оновлення застосунку
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# id-token: write потрібен, щоб GitHub видав OIDC-токен. Інших прав workflow не має.
 permissions:
   id-token: write
   contents: read
@@ -17,7 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Вхід в Azure через OIDC. Секретів немає: лише публічні ідентифікатори зі змінних репозиторію.
       - uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -41,5 +38,12 @@ jobs:
         run: |
           az containerapp update \
             --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --image "${{ vars.ACR_LOGIN_SERVER }}/shop:${{ github.sha }}"
+
+      - name: Update worker Container App
+        run: |
+          az containerapp update \
+            --name "${{ vars.CONTAINER_APP_NAME }}-worker" \
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
             --image "${{ vars.ACR_LOGIN_SERVER }}/shop:${{ github.sha }}"

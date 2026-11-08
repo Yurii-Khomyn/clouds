@@ -121,6 +121,22 @@ open http://localhost:3000
 
 `terraform.tfvars` і `terraform.tfstate` у `.gitignore`: у стані зберігається згенерований пароль бази, тому цей файл не можна публікувати.
 
+## Лабораторна 2: масштабування, моніторинг, кешування
+
+| Завдання | Де |
+|---|---|
+| Автоматичне масштабування (1–3 екземпляри за CPU 60 %, розклад день/ніч) | `infra/app.tf`, `docs/AUTOSCALING.md`, `docs/SCHEDULE.md` |
+| Сценарій навантаження (k6: 1 запис і 8–10 читань) | `loadtest/`, `docs/LOADTEST.md` |
+| Панель моніторингу (7 графіків) | `infra/monitoring.tf` |
+| Сповіщення на пошту (p95, максимум екземплярів, 5xx) | `infra/monitoring.tf`, `docs/ALERTS.md` |
+| Кеш Redis (cache-aside, TTL 45 с) | `app/src/cache.js`, `infra/redis.tf`, `docs/CACHE.md` |
+| Черга Service Bus і обробник | `app/src/worker.js`, `infra/servicebus.tf`, `infra/worker.tf`, `docs/QUEUE.md` |
+| Ідемпотентність (`Idempotency-Key`) | `app/src/server.js`, `docs/IDEMPOTENCY.md`, `tests/idempotency.js` |
+
+Запуск навантаження: `./loadtest/run.sh https://<адреса сайту> <кількість користувачів> <мітка>` (потрібен лише Docker).
+
+Балансувальник із лабораторної 1 (`infra/loadbalancer.tf.disabled`) у цій роботі вимкнено, щоб зекономити бюджет: застосунок відкритий напряму через вхід Container Apps.
+
 ## Автоматичний деплой
 
 Кожен push у `main` запускає workflow `Deploy`:
