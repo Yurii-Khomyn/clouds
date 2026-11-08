@@ -1,4 +1,3 @@
-// Опис API у форматі OpenAPI 3. Swagger UI (/docs) будує з нього інтерактивну сторінку.
 module.exports = {
   openapi: '3.0.3',
   info: {
@@ -55,6 +54,53 @@ module.exports = {
         },
       },
     },
+    '/products/popular': {
+      get: {
+        tags: ['Каталог'],
+        summary: 'Бестселери',
+        description: 'Топ-5 товарів за кількістю проданих одиниць. Результат кешується в Redis на 45 секунд (заголовок X-Cache: HIT або MISS).',
+        responses: { 200: { description: 'Список товарів із полем sold' } },
+      },
+    },
+    '/products/{id}': {
+      get: {
+        tags: ['Каталог'],
+        summary: 'Один товар',
+        description: 'Кешується в Redis на 45 секунд.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: { description: 'Товар' },
+          404: { description: 'Не знайдено', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
+      },
+    },
+    '/me': {
+      get: {
+        tags: ['Автентифікація'],
+        summary: 'Дані поточного користувача',
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Профіль' }, 401: { description: 'Немає або недійсний токен' } },
+      },
+    },
+    '/orders/requests/{id}': {
+      get: {
+        tags: ['Замовлення'],
+        summary: 'Статус обробки замовлення',
+        description: 'Коли замовлення йде через чергу (відповідь 202), цей запит показує, чи воно вже оброблено: pending, done (є order_id) або failed.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { 200: { description: 'Статус' }, 404: { description: 'Не знайдено' } },
+      },
+    },
+    '/orders/{id}': {
+      get: {
+        tags: ['Замовлення'],
+        summary: 'Одне власне замовлення',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: { 200: { description: 'Замовлення' }, 404: { description: 'Не знайдено' } },
+      },
+    },
     '/orders': {
       get: {
         tags: ['Замовлення'],
@@ -74,6 +120,10 @@ module.exports = {
         },
       },
       post: {
+        parameters: [{
+          name: 'Idempotency-Key', in: 'header', required: false, schema: { type: 'string', maxLength: 128 },
+          description: 'Унікальний ключ запиту. Повторний запит з тим самим ключем не створює нового замовлення, а повертає збережену відповідь (24 години). Той самий ключ з іншим тілом дає 422.',
+        }],
         tags: ['Замовлення'],
         summary: 'Створити замовлення',
         description: 'Потрібен токен. Ім\'я покупця береться з токена, суму рахує сервер за цінами з бази.',
@@ -88,8 +138,12 @@ module.exports = {
           },
         },
         responses: {
+          202: {
+            description: 'Замовлення прийнято в чергу на обробку (режим черги). Результат: GET /orders/requests/{request_id}.',
+            content: { 'application/json': { schema: { type: 'object', properties: { request_id: { type: 'string', format: 'uuid' }, status: { type: 'string', example: 'pending' }, status_url: { type: 'string' } } } } },
+          },
           201: {
-            description: 'Замовлення створено',
+            description: 'Замовлення створено (прямий режим, без черги)',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/OrderCreated' } } },
           },
           401: { description: 'Немає токена або він недійсний', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },

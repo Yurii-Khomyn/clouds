@@ -118,7 +118,6 @@ aside > button { width: 100%; }
 #message.ok { color: var(--ok); }
 #message.err { color: var(--err); }
 
-/* --- Автентифікація --- */
 header #auth { display: flex; align-items: center; gap: 12px; font-size: .9rem; }
 button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
 button.secondary:hover:not(:disabled) { background: var(--bg); }

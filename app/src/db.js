@@ -1,7 +1,5 @@
 const { Pool } = require('pg');
 
-// Рядок підключення береться ТІЛЬКИ зі змінної середовища (вимога методички:
-// жодних секретів у коді чи репозиторії).
 if (!process.env.DATABASE_URL) {
   console.error('DATABASE_URL is not set');
   process.exit(1);
@@ -9,13 +7,11 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Керований PostgreSQL в Azure вимагає TLS; локально (compose) він не потрібен.
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// База може стартувати повільніше за застосунок, тому пробуємо підключитись кілька разів.
 async function waitForDb(attempts = 30) {
   for (let i = 1; i <= attempts; i++) {
     try {
@@ -29,7 +25,6 @@ async function waitForDb(attempts = 30) {
   throw new Error('Database is unreachable');
 }
 
-// Створює таблиці при першому запуску і наповнює каталог товарів.
 async function init() {
   await waitForDb();
 
@@ -54,8 +49,16 @@ async function init() {
       total_cents   INTEGER     NOT NULL,
       created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
     );
-    -- user_id додано пізніше: ALTER безпечний для вже існуючої бази.
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id);
+    CREATE TABLE IF NOT EXISTS order_requests (
+      id         UUID PRIMARY KEY,
+      user_id    INTEGER NOT NULL REFERENCES users(id),
+      status     TEXT NOT NULL DEFAULT 'pending',
+      order_id   INTEGER REFERENCES orders(id),
+      error      TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS order_items (
       id         SERIAL PRIMARY KEY,
       order_id   INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,

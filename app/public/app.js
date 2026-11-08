@@ -2,11 +2,8 @@ const $ = (id) => document.getElementById(id);
 const money = (cents) => `${(cents / 100).toLocaleString('uk-UA')} ₴`;
 
 let products = [];
-const cart = new Map(); // productId -> quantity
+const cart = new Map();
 
-// --- Сесія ---
-// Токен зберігаємо в localStorage: для навчального проєкту достатньо.
-// У продакшені безпечніше HttpOnly-cookie, бо localStorage доступний будь-якому скрипту на сторінці.
 const session = {
   get token() { try { return localStorage.getItem('token'); } catch { return null; } },
   get name() { try { return localStorage.getItem('name'); } catch { return null; } },
@@ -19,7 +16,6 @@ function say(text, kind) {
   $('message').className = kind || '';
 }
 
-// fetch із токеном. Якщо сервер каже 401, токен недійсний (наприклад, минула година): виходимо.
 async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   if (session.token) headers.Authorization = `Bearer ${session.token}`;
@@ -31,7 +27,6 @@ async function api(path, options = {}) {
   return res;
 }
 
-// --- Товари ---
 async function loadProducts() {
   try {
     const res = await fetch('/products');
@@ -53,7 +48,6 @@ function renderProducts() {
       <h3></h3><p></p>
       <div class="price">${money(p.price_cents)}</div>
       <button>У кошик</button>`;
-    // textContent, а не innerHTML, для даних з бази: захист від XSS.
     const img = card.querySelector('img');
     img.src = p.image_url;
     img.alt = p.name;
@@ -67,7 +61,6 @@ function renderProducts() {
   }
 }
 
-// --- Кошик ---
 function renderCart() {
   const list = $('cart-items');
   list.innerHTML = '';
@@ -94,7 +87,6 @@ function renderCart() {
 }
 
 $('checkout').onclick = async () => {
-  // Замовлення лише для авторизованих: без входу показуємо форму входу.
   if (!session.token) {
     say('Щоб оформити замовлення, увійдіть.', 'err');
     return openAuth('login');
@@ -103,17 +95,39 @@ $('checkout').onclick = async () => {
   const res = await api('/orders', { method: 'POST', body: JSON.stringify({ items }) });
 
   if (res.ok) {
-    const order = await res.json();
+    const data = await res.json();
     cart.clear();
     renderCart();
-    say(`Замовлення №${order.id} прийнято на суму ${money(order.total_cents)} ✅`, 'ok');
+    if (res.status === 202) {
+      say('Замовлення прийнято в обробку…', 'ok');
+      const result = await waitForOrder(data.request_id);
+      if (result && result.status === 'done') {
+        say(`Замовлення №${result.order_id} оброблено ✅`, 'ok');
+      } else if (result && result.status === 'failed') {
+        say('Замовлення не вдалося обробити', 'err');
+      } else {
+        say('Замовлення ще обробляється, перевірте список нижче', 'ok');
+      }
+    } else {
+      say(`Замовлення №${data.id} прийнято на суму ${money(data.total_cents)} ✅`, 'ok');
+    }
     loadOrders();
   } else if (res.status !== 401) {
     say('Не вдалося оформити замовлення', 'err');
   }
 };
 
-// --- Мої замовлення ---
+async function waitForOrder(requestId) {
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const res = await api(`/orders/requests/${requestId}`);
+    if (!res.ok) return null;
+    const r = await res.json();
+    if (r.status !== 'pending') return r;
+  }
+  return null;
+}
+
 async function loadOrders() {
   $('orders-box').hidden = !session.token;
   if (!session.token) return;
@@ -133,7 +147,6 @@ async function loadOrders() {
   }
 }
 
-// --- Вхід / реєстрація ---
 let mode = 'login';
 
 function renderAuthBar() {
