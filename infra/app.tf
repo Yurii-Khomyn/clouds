@@ -12,12 +12,10 @@ resource "azurerm_container_app_environment" "main" {
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
 
-  # Середовище живе у нашій VNet, тому застосунок бачить базу за приватною адресою.
   infrastructure_subnet_id = azurerm_subnet.app.id
 
-  # Внутрішнє середовище: публічної адреси немає, до застосунку можна лише через балансувальник.
-  internal_load_balancer_enabled = true
-  public_network_access          = "Disabled"
+  internal_load_balancer_enabled = false
+  public_network_access          = "Enabled"
 
   workload_profile {
     name                  = "Consumption"
@@ -25,7 +23,6 @@ resource "azurerm_container_app_environment" "main" {
   }
 }
 
-# Ключ підпису JWT-токенів. Генерується Terraform, живе лише в state і секреті Container Apps.
 resource "random_password" "jwt" {
   length  = 48
   special = false
@@ -48,7 +45,6 @@ resource "azurerm_container_app" "shop" {
     identity = azurerm_user_assigned_identity.app.id
   }
 
-  # Рядок підключення: секрет Container Apps, а в контейнер потрапляє як змінна середовища.
   secret {
     name  = "database-url"
     value = "postgres://${azurerm_postgresql_flexible_server.main.administrator_login}:${random_password.db.result}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.shop.name}"
@@ -59,9 +55,14 @@ resource "azurerm_container_app" "shop" {
     value = random_password.jwt.result
   }
 
+  secret {
+    name  = "servicebus-connection"
+    value = azurerm_servicebus_namespace_authorization_rule.app.primary_connection_string
+  }
+
   ingress {
-    external_enabled           = true # у внутрішньому середовищі це доступ з VNet, не з інтернету
-    allow_insecure_connections = true # балансувальник ходить на бекенд по HTTP усередині VNet
+    external_enabled           = true
+    allow_insecure_connections = true
     target_port                = 3000
     traffic_weight {
       percentage      = 100
@@ -71,7 +72,29 @@ resource "azurerm_container_app" "shop" {
 
   template {
     min_replicas = 1
-    max_replicas = 2
+    max_replicas = 3
+
+    cooldown_period_in_seconds = 300
+
+    custom_scale_rule {
+      name             = "day-schedule"
+      custom_rule_type = "cron"
+      metadata = {
+        timezone        = var.schedule_timezone
+        start           = var.schedule_day_start
+        end             = var.schedule_day_end
+        desiredReplicas = tostring(var.schedule_day_replicas)
+      }
+    }
+
+    custom_scale_rule {
+      name             = "cpu"
+      custom_rule_type = "cpu"
+      metadata = {
+        type  = "Utilization"
+        value = "60"
+      }
+    }
 
     container {
       name   = "shop"
@@ -89,7 +112,31 @@ resource "azurerm_container_app" "shop" {
       }
       env {
         name  = "DB_SSL"
-        value = "true" # керований Postgres приймає лише TLS
+        value = "true"
+      }
+      env {
+        name  = "REDIS_URL"
+        value = "redis://${azurerm_container_app.redis.name}:6379"
+      }
+      env {
+        name  = "CACHE_ENABLED"
+        value = tostring(var.cache_enabled)
+      }
+      env {
+        name        = "SERVICEBUS_CONNECTION"
+        secret_name = "servicebus-connection"
+      }
+      env {
+        name  = "SERVICEBUS_QUEUE"
+        value = azurerm_servicebus_queue.orders.name
+      }
+      env {
+        name  = "ORDERS_MODE"
+        value = var.orders_mode
+      }
+      env {
+        name  = "CACHE_TTL_SECONDS"
+        value = "45"
       }
 
       liveness_probe {
@@ -105,7 +152,6 @@ resource "azurerm_container_app" "shop" {
     }
   }
 
-  # Образ далі оновлює CI, а Terraform цю зміну не відкочує.
   lifecycle {
     ignore_changes = [template[0].container[0].image]
   }

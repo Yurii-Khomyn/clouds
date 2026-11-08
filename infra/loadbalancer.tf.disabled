@@ -1,7 +1,3 @@
-# Керований балансувальник Azure Application Gateway: єдине, що видно з інтернету.
-# Контейнерне середовище внутрішнє (див. app.tf), тож напряму до застосунку не дістатись.
-
-# Для Application Gateway потрібна власна підмережа без інших ресурсів.
 resource "azurerm_subnet" "gateway" {
   name                 = "snet-gateway"
   resource_group_name  = azurerm_resource_group.main.name
@@ -9,7 +5,6 @@ resource "azurerm_subnet" "gateway" {
   address_prefixes     = ["10.0.4.0/24"]
 }
 
-# Єдина публічна адреса в усій інфраструктурі.
 resource "azurerm_public_ip" "lb" {
   name                = "pip-${var.project}-lb"
   resource_group_name = azurerm_resource_group.main.name
@@ -49,14 +44,11 @@ resource "azurerm_application_gateway" "main" {
     public_ip_address_id = azurerm_public_ip.lb.id
   }
 
-  # Бекенд це приватна адреса внутрішнього середовища Container Apps.
-  # Container Apps вибирає застосунок за заголовком Host, тому його підставляємо явно.
   backend_address_pool {
     name         = "shop"
     ip_addresses = [azurerm_container_app_environment.main.static_ip_address]
   }
 
-  # Health check: балансувальник сам перевіряє /health і не шле трафік на нездорові екземпляри.
   probe {
     name                = "health"
     protocol            = "Http"

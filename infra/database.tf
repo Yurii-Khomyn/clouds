@@ -1,5 +1,3 @@
-# Пароль адміна генерується Terraform і живе лише в state (він у .gitignore),
-# тобто в репозиторії його немає ніде.
 resource "random_password" "db" {
   length  = 24
   special = false
@@ -11,13 +9,12 @@ resource "azurerm_postgresql_flexible_server" "main" {
   location            = azurerm_resource_group.main.location
 
   version    = "17"
-  sku_name   = "B_Standard_B1ms" # найдешевший, Burstable
+  sku_name   = "B_Standard_B1ms"
   storage_mb = 32768
 
   administrator_login    = "shopadmin"
   administrator_password = random_password.db.result
 
-  # Приватний доступ: сервер у делегованій підмережі, публічної адреси немає.
   delegated_subnet_id           = azurerm_subnet.db.id
   private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
   public_network_access_enabled = false

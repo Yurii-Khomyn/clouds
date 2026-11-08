@@ -1,4 +1,3 @@
-# Бюджет із сповіщеннями на email: 50% / 80% / 100% фактичних витрат і прогноз 100%.
 resource "azurerm_consumption_budget_subscription" "main" {
   name            = "budget-${var.project}"
   subscription_id = "/subscriptions/${var.subscription_id}"

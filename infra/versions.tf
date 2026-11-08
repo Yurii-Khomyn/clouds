@@ -20,7 +20,6 @@ terraform {
 provider "azurerm" {
   features {}
 
-  subscription_id = var.subscription_id
-  # Провайдери ресурсів (App, Postgres, ...) зареєстровано заздалегідь через `az provider register`.
+  subscription_id                 = var.subscription_id
   resource_provider_registrations = "none"
 }

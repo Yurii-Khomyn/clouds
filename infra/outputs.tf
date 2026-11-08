@@ -1,6 +1,6 @@
 output "app_url" {
-  description = "Публічна адреса магазину (через балансувальник)"
-  value       = "http://${azurerm_public_ip.lb.fqdn}"
+  description = "Публічна адреса магазину"
+  value       = "https://${azurerm_container_app.shop.ingress[0].fqdn}"
 }
 
 output "resource_group" {
@@ -20,7 +20,6 @@ output "db_fqdn" {
   value       = azurerm_postgresql_flexible_server.main.fqdn
 }
 
-# Нижче ідентифікатори, не секрети: їх підставляє workflow через змінні GitHub.
 output "github_client_id" {
   value = azurerm_user_assigned_identity.github.client_id
 }
