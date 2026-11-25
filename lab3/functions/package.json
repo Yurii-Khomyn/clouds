@@ -1,0 +1,16 @@
+{
+  "name": "iot-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/functions/*.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.10.2",
+    "@azure/functions": "^4.7.0",
+    "@azure/service-bus": "^7.10.0",
+    "@azure/storage-blob": "^12.34.0",
+    "pg": "^8.13.0"
+  }
+}
