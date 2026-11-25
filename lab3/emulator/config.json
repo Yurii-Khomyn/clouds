@@ -1,0 +1,60 @@
+{
+  "api_url": "http://localhost:8080/ingest",
+  "duration_seconds": 0,
+  "max_in_flight_per_sensor": 50,
+  "sensors": [
+    {
+      "sensor_id": "temp-kyiv-01",
+      "sensor_type": "temperature",
+      "unit": "°C",
+      "interval_ms": 40,
+      "location": {
+        "lat": 50.4501,
+        "lon": 30.5234
+      },
+      "start": 21,
+      "min": -10,
+      "max": 40,
+      "step": 0.15
+    },
+    {
+      "sensor_id": "hum-kyiv-01",
+      "sensor_type": "humidity",
+      "unit": "%",
+      "interval_ms": 70,
+      "location": {
+        "lat": 50.4547,
+        "lon": 30.5238
+      },
+      "start": 55,
+      "min": 10,
+      "max": 95,
+      "step": 0.5
+    },
+    {
+      "sensor_id": "light-kyiv-01",
+      "sensor_type": "light",
+      "unit": "lx",
+      "interval_ms": 100,
+      "location": {
+        "lat": 50.4422,
+        "lon": 30.5197
+      },
+      "start": 800,
+      "min": 0,
+      "max": 20000,
+      "step": 120
+    }
+  ],
+  "upload_url_endpoint": "http://localhost:8080/camera/upload-url",
+  "camera": {
+    "enabled": true,
+    "sensor_id": "cam-kyiv-01",
+    "interval_seconds": 15,
+    "location": {
+      "lat": 50.4505,
+      "lon": 30.524
+    },
+    "images_dir": "images"
+  }
+}

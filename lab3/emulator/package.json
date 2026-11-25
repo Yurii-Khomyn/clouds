@@ -1,0 +1,12 @@
+{
+  "name": "sensor-emulator",
+  "version": "1.0.0",
+  "description": "Emulator of three IoT sensors that POSTs measurements to an HTTP endpoint",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "mock": "node mock-receiver.js"
+  },
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}
